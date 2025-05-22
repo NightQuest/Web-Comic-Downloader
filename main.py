@@ -35,7 +35,8 @@ class Application:
         return selectorTuple
 
     def downloadComics(self) -> None:
-        comics = self.config.get('comics')
+        comics: list[dict] = self.config.get('comics')
+
         if not comics:
             print("No comics to download")
             exit()
@@ -47,11 +48,23 @@ class Application:
             comicName = comics[i]['name']
             currentPage = nextPage = comics[i]['url']
             pageNum = comics[i]['page_num']
-            imageSelector = self.resolveSelectorType(comics[i]['image_selector'])
-            titleSelector = self.resolveSelectorType(comics[i]['title_selector'])
-            nextSelector = self.resolveSelectorType(comics[i]['next_selector'])
+
+            imageSelector = comics[i].get('image_selector')
+            titleSelector = comics[i].get('title_selector')
+            nextSelector = comics[i].get('next_selector')
+
+            if imageSelector:
+                imageSelector = self.resolveSelectorType(imageSelector)
+            if titleSelector:
+                titleSelector = self.resolveSelectorType(titleSelector)
+            if nextSelector:
+                nextSelector = self.resolveSelectorType(nextSelector)
 
             print(f"\nDownloading: {comicName}")
+
+            if not imageSelector:
+                print("Missing image selector")
+                continue
 
             downloader = WebComicDownloader()
 
