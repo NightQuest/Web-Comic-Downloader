@@ -2,24 +2,28 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common import exceptions as SExceptions
 from sanitize_filename import sanitize
+from config import Config
 import os
 import requests
 import mimetypes
 
 class WebComicDownloader:
     def __init__(self,
+        config: Config,
         imageSelector: tuple[str, str],
         titleSelector: tuple[str, str] | None = None,
         nextSelector: tuple[str, str] | None = None,
         fallbackExension: str = ".png"
         ) -> None:
+        self._config = config
         self.imageSelector = imageSelector
         self.titleSelector = titleSelector
         self.nextSelector = nextSelector
         self.fallbackExension = fallbackExension
-        options = webdriver.FirefoxOptions()
-        options.add_argument("-headless")
-        self.driver = webdriver.Firefox(options)
+        if config.get('browser') == "firefox":
+            options = webdriver.FirefoxOptions()
+            options.add_argument("-headless")
+            self.driver = webdriver.Firefox(options)
         self.userAgent = self.driver.execute_script('return navigator.userAgent;')
 
     def __del__(self) -> None:
