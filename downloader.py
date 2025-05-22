@@ -16,6 +16,7 @@ class WebComicDownloader:
 
     def load(self, page: str):
         self.driver.get(page)
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     def wait(self, time: float) -> None:
         self.driver.implicitly_wait(time)
