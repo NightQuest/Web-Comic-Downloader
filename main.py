@@ -41,7 +41,7 @@ class Application:
             exit()
 
         delay = self.config.get('delay') or 0.25
-        fallbackExension = self.config.get('fallback_extension')
+        fallbackExension = self.config.get('fallback_extension') or "png"
 
         for i in range(0, len(comics)):
             comicName = comics[i]['name']
