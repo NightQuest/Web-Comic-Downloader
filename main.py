@@ -51,6 +51,8 @@ class Application:
             titleSelector = self.resolveSelectorType(comics[i]['title_selector'])
             nextSelector = self.resolveSelectorType(comics[i]['next_selector'])
 
+            print(f"\nDownloading: {comicName}")
+
             downloader = WebComicDownloader()
 
             while nextPage:
