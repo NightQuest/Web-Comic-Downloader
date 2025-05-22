@@ -82,7 +82,7 @@ class Application:
                         title = sanitize(downloader.getTitle(titleSelector))
 
                     if not url:
-                        raise Exception("Failed to find comic image")
+                        break
 
                     response = requests.get(url, headers={
                         "User-Agent": downloader.userAgent,
@@ -132,6 +132,6 @@ if __name__ == "__main__":
         app = Application(config)
         app.downloadComics()
     except KeyboardInterrupt:
-        print("Aborted")
+        print("\nAborted")
 
-    print("Complete")
+    print("\nComplete")
