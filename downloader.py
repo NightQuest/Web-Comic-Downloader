@@ -35,7 +35,14 @@ class WebComicDownloader:
             elem = self.driver.find_element(elementSelector[0], elementSelector[1])
         except SExceptions.NoSuchElementException:
             return None
-        return elem.get_attribute('src')
+
+        srcset = elem.get_attribute("srcset")
+        if srcset:
+            url = srcset.split(",")[-1].split(" ")[0] # Get largest image URL from srcset
+        else:
+            url = elem.get_attribute("src") # Fallback to src if no srcset
+
+        return url
 
     def getLink(self, elementSelector: tuple[str, str]) -> str | None:
         try:
