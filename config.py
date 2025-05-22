@@ -2,8 +2,17 @@ import os, json, base64, uuid
 
 class Config:
 	DEFAULT_CONFIG = {
-        "browser": "Firefox",
+        "browser": "firefox",
         "delay": 0.25,
+		"fallback_extension": "png",
+		"comics": [{
+			"name": "Comic Name",
+			"url": "COMIC_PAGE_1_URL",
+			"page_num": 1,
+			"image_selector": ["id", "cc-comic"],
+			"title_selector": ["class_name", "cc-newsheader"],
+			"next_selector": ["class_name", "cc-next"]
+		}]
 	}
 
 	def __init__(self, fileName):
