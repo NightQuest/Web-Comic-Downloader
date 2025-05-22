@@ -117,6 +117,9 @@ class Application:
                         break
 
                     nextPage = downloader.getLink(nextSelector)
+                    if nextPage:
+                        nextPage = nextPage.strip().split('#')[0] # Get rid of #something-here
+
                     if not nextPage or nextPage == currentPage:
                         nextPage = None
                     else:
