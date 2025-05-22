@@ -1,3 +1,4 @@
+from typing import overload
 import os, json, base64, uuid
 
 class Config:
@@ -80,7 +81,13 @@ class Config:
 	def get(self, key: str):
 		return self._store.get(key)
 
-	def set(self, key: str, value: str):
+	@overload
+	def set(self, key: str, value: list): ...
+
+	@overload
+	def set(self, key: str, value: str): ...
+
+	def set(self, key: str, value):
 		self._store.update({key: value})
 
 	def pop(self, key: str):
