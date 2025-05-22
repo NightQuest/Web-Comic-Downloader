@@ -37,9 +37,9 @@ class WebComicDownloader:
         except SExceptions.NoSuchElementException:
             return None
 
-        srcset = elem.get_attribute("srcset")
+        srcset = elem.get_attribute('srcset')
         if srcset:
-            url = srcset.split(",")[-1].split(" ")[0] # Get largest image URL from srcset
+            url = srcset.split(',')[-1].strip().split(' ')[0] # Get largest image URL from srcset
         else:
             url = elem.get_attribute("src") # Fallback to src if no srcset
 
