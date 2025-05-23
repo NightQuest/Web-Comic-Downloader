@@ -24,12 +24,15 @@ class WebComicDownloader:
     def getDomain(self) -> str:
         return self.driver.execute_script('return window.location.origin;')
 
-    def getTitle(self, elementSelector: tuple[str, str]) -> str:
+    def getTitle(self, elementSelector: tuple[str, str]) -> str | None:
         try:
             title = self.driver.find_element(elementSelector[0], elementSelector[1])
         except (SExceptions.NoSuchElementException, SExceptions.StaleElementReferenceException):
-            return ""
-        return title.text
+            return None
+
+        if len(title.text.strip()) == 0:
+            return None
+        return title.text.strip()
 
     def getImageURL(self, elementSelector: tuple[str, str]) -> str | None:
         try:

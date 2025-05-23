@@ -36,6 +36,7 @@ class Application:
 
     def downloadComics(self) -> None:
         comics: list[dict] = self.config.get('comics')
+        nextPage: str | None = None
 
         if not comics:
             print("No comics to download")
@@ -74,73 +75,75 @@ class Application:
             downloader = WebComicDownloader()
 
             while nextPage:
-                    loaded = False
-                    tries = 0
-                    while not loaded:
-                        try:
-                            downloader.load(nextPage)
-                            loaded = True
-                        except urllib3.exceptions.ReadTimeoutError as e:
-                            tries = tries + 1
-                            if tries >= 5:
-                                print(f"{e}")
-                                exit()
-                            else:
-                                print(f"Retrying ({tries}/5) ...")
+                complete = False
+                url = None
+                title = None
 
-                    if delay:
-                        downloader.wait(delay)
+                while not complete and nextPage:
+                    try:
+                        downloader.load(nextPage)
 
-                    currentPage = nextPage
-                    url = downloader.getImageURL(imageSelector)
+                        if delay:
+                            downloader.wait(delay)
 
-                    title = None
-                    if titleSelector:
-                        title = sanitize(downloader.getTitle(titleSelector))
+                        currentPage = nextPage
+                        url = downloader.getImageURL(imageSelector)
 
-                    if not url:
-                        break
+                        title = None
+                        if titleSelector:
+                            title = downloader.getTitle(titleSelector)
+                            if title:
+                                title = sanitize(title)
 
-                    response = requests.get(url, headers={
-                        "User-Agent": downloader.userAgent,
-                        "Referer": downloader.getDomain()
-                        })
-                    response.raise_for_status()
+                        if nextSelector:
+                            nextPage = downloader.getLink(nextSelector)
 
-                    fileType = mimetypes.guess_extension(response.headers['content-type'])
-                    if not fileType:
-                        fileType = f".{fallbackExension}"
+                        complete = True
+                    except KeyboardInterrupt as e:
+                        raise e
+                    except:
+                        downloader = WebComicDownloader()
 
-                    if not os.path.exists(f"comics/{comicName}"):
-                        os.mkdir(f"comics/{comicName}")
+                if not url:
+                    break
 
-                    if not title:
-                        filename = f"{pageNum:05d}{fileType}"
-                    else:
-                        filename = f"{pageNum:05d} - {title}{fileType}"
+                response = requests.get(url, headers={
+                    "User-Agent": downloader.userAgent,
+                    "Referer": downloader.getDomain()
+                    })
+                response.raise_for_status()
 
-                    print(f"Saving: {filename}")
+                fileType = mimetypes.guess_extension(response.headers['content-type'])
+                if not fileType:
+                    fileType = f".{fallbackExension}"
 
-                    with open(f"comics/{comicName}/{filename}", 'wb') as file:
-                        file.write(response.content)
+                if not os.path.exists(f"comics/{comicName}"):
+                    os.mkdir(f"comics/{comicName}")
 
-                    # Update config
-                    comics[i]['url'] = currentPage
-                    comics[i]['page_num'] = pageNum
-                    self.config.set('comics', comics)
-                    self.config._writeConfig()
+                if not title:
+                    filename = f"{pageNum:05d}{fileType}"
+                else:
+                    filename = f"{pageNum:05d} - {title}{fileType}"
 
-                    if not nextSelector:
-                        break
+                print(f"Saving: {filename}")
 
-                    nextPage = downloader.getLink(nextSelector)
-                    if nextPage:
-                        nextPage = nextPage.strip().split('#')[0] # Get rid of #something-here
+                with open(f"comics/{comicName}/{filename}", 'wb') as file:
+                    file.write(response.content)
 
-                    if not nextPage or nextPage == currentPage:
-                        nextPage = None
-                    else:
-                        pageNum = pageNum + 1
+                # Update config
+                comics[i]['url'] = currentPage
+                comics[i]['page_num'] = pageNum
+                self.config.set('comics', comics)
+                self.config._writeConfig()
+
+                if nextPage:
+                    nextPage = nextPage.strip().split('#')[0] # Get rid of #something-here
+
+                if not nextPage or nextPage == currentPage:
+                    nextPage = None
+                else:
+                    pageNum = pageNum + 1
+
 
 if __name__ == "__main__":
     try:
