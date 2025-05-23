@@ -69,7 +69,19 @@ class Application:
             downloader = WebComicDownloader()
 
             while nextPage:
-                    downloader.load(nextPage)
+                    loaded = False
+                    tries = 0
+                    while not loaded:
+                        try:
+                            downloader.load(nextPage)
+                            loaded = True
+                        except urllib3.exceptions.ReadTimeoutError as e:
+                            tries = tries + 1
+                            if tries >= 5:
+                                print(f"{e}")
+                                exit()
+                            else:
+                                print(f"Retrying ({tries}/5) ...")
 
                     if delay:
                         downloader.wait(delay)
