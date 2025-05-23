@@ -1,5 +1,4 @@
-import os, urllib3
-from typing import List, Literal
+import os
 import requests
 import mimetypes
 
@@ -74,10 +73,18 @@ class Application:
 
             downloader = WebComicDownloader()
 
+            pageCount = 0;
             while nextPage:
                 complete = False
                 url = None
                 title = None
+                pageCount = pageCount + 1
+
+                # Selenium seems to have a memory leak
+                # restart every 100 pages
+                if pageCount == 100:
+                    pageCount = 0
+                    downloader = WebComicDownloader()
 
                 while not complete and nextPage:
                     try:
