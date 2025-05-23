@@ -7,6 +7,7 @@ class Config:
         "delay": 0.25,
 		"fallback_extension": "png",
 		"comics": [{
+			"enabled": True,
 			"name": "Comic Name",
 			"url": "COMIC_PAGE_1_URL",
 			"page_num": 1,

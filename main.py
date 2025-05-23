@@ -1,4 +1,4 @@
-import os
+import os, urllib3
 from typing import List, Literal
 import requests
 import mimetypes
@@ -48,6 +48,11 @@ class Application:
             comicName = comics[i]['name']
             currentPage = nextPage = comics[i]['url']
             pageNum = comics[i]['page_num']
+            enabled = comics[i]['enabled']
+
+            if not enabled:
+                print(f"Skipped: {comicName}")
+                continue
 
             imageSelector = comics[i].get('image_selector')
             titleSelector = comics[i].get('title_selector')
