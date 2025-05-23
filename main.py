@@ -151,7 +151,6 @@ if __name__ == "__main__":
 
         app = Application(config)
         app.downloadComics()
+        print("\nComplete")
     except KeyboardInterrupt:
         print("\nAborted")
-
-    print("\nComplete")
