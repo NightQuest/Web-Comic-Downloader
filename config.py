@@ -6,8 +6,9 @@ class Config:
         "browser": "firefox",
         "delay": 0.25,
 		"fallback_extension": "png",
-		"download_by": "order_desc", # order, name_desc, name_asc
+		"download_by": "order", # order, name_desc, name_asc
     	"overwrite_existing": False,
+    	"update_config": False, # this will re-order if download_by is anything other than 'order'
 		"comics": [{
 			"enabled": True,
 			"name": "Comic Name",

@@ -45,6 +45,7 @@ class Application:
         fallbackExension = self.config.get('fallback_extension') or "png"
         download_by = self.config.get('download_by')
         overwrite_existing: bool = self.config.get('overwrite_existing') == True
+        update_config: bool = self.config.get('update_config') == True
 
         if download_by == "name_desc":
             comics = sorted(comics, key=lambda comic: comic['name'])
@@ -153,10 +154,11 @@ class Application:
                         file.write(response.content)
 
                 # Update config
-                comics[i]['url'] = currentPage
-                comics[i]['page_num'] = pageNum
-                self.config.set('comics', comics)
-                self.config._writeConfig()
+                if update_config:
+                    comics[i]['url'] = currentPage
+                    comics[i]['page_num'] = pageNum
+                    self.config.set('comics', comics)
+                    self.config._writeConfig()
 
                 if nextPage:
                     nextPage = nextPage.strip().split('#')[0] # Get rid of #something-here
