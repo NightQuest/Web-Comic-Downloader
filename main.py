@@ -138,10 +138,13 @@ class Application:
                 else:
                     filename = f"{pageNum:05d} - {title}{fileType}"
 
-                print(f"Saving: {filename}")
+                if not self.config.get('overwrite_existing') and os.path.exists(f"comics/{comicName}/{filename}"):
+                    print(f"Skipped: {filename}")
+                else:
+                    print(f"Saving: {filename}")
 
-                with open(f"comics/{comicName}/{filename}", 'wb') as file:
-                    file.write(response.content)
+                    with open(f"comics/{comicName}/{filename}", 'wb') as file:
+                        file.write(response.content)
 
                 # Update config
                 comics[i]['url'] = currentPage
