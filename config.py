@@ -6,6 +6,7 @@ class Config:
         "browser": "firefox",
         "delay": 0.25,
 		"fallback_extension": "png",
+		"download_by": "order_desc", # order, name_desc, name_asc
 		"comics": [{
 			"enabled": True,
 			"name": "Comic Name",

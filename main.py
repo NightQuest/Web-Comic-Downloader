@@ -43,6 +43,12 @@ class Application:
 
         delay = self.config.get('delay') or 0.25
         fallbackExension = self.config.get('fallback_extension') or "png"
+        download_by = self.config.get('download_by')
+
+        if download_by == "name_desc":
+            comics = sorted(comics, key=lambda comic: comic['name'])
+        elif download_by == "name_asc":
+            comics = sorted(comics, key=lambda comic: comic['name'], reverse=True)
 
         for i in range(0, len(comics)):
             comicName = comics[i]['name']
