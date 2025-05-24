@@ -44,6 +44,7 @@ class Application:
         delay = self.config.get('delay') or 0.25
         fallbackExension = self.config.get('fallback_extension') or "png"
         download_by = self.config.get('download_by')
+        overwrite_existing: bool = self.config.get('overwrite_existing') == True
 
         if download_by == "name_desc":
             comics = sorted(comics, key=lambda comic: comic['name'])
@@ -138,10 +139,15 @@ class Application:
                 else:
                     filename = f"{pageNum:05d} - {title}{fileType}"
 
-                if not self.config.get('overwrite_existing') and os.path.exists(f"comics/{comicName}/{filename}"):
+                exists = os.path.exists(f"comics/{comicName}/{filename}")
+
+                if not overwrite_existing and exists:
                     print(f"Skipped: {filename}")
                 else:
-                    print(f"Saving: {filename}")
+                    if exists:
+                        print(f"Overwriting: {filename}")
+                    else:
+                        print(f"Saving: {filename}")
 
                     with open(f"comics/{comicName}/{filename}", 'wb') as file:
                         file.write(response.content)
