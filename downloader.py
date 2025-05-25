@@ -47,8 +47,11 @@ class WebComicDownloader:
 
         # Get largest image URL from srcset
         srcset = elem.get_attribute('srcset')
-        if srcset:
-            return srcset.split(',')[-1].strip().split(' ')[0]
+        width = elem.get_attribute('width')
+        if srcset and width:
+            srcset_largest = srcset.split(',')[-1].strip().split(' ')
+            if int(width) < int(srcset_largest[1].removesuffix('w')):
+                return srcset_largest[0]
 
         # Fallback to src
         return elem.get_attribute("src")
