@@ -1,6 +1,7 @@
 import os
 import requests
 import mimetypes
+import base64
 
 from selenium.webdriver.common.by import By
 from sanitize_filename import sanitize
@@ -122,13 +123,32 @@ class Application:
                 if not url:
                     break
 
-                response = requests.get(url, headers={
-                    "User-Agent": downloader.userAgent,
-                    "Referer": downloader.getDomain()
-                    })
-                response.raise_for_status()
+                schema = url.split(':')[0]
+                contentType = None
+                content = None
 
-                fileType = mimetypes.guess_extension(response.headers['content-type'])
+                if schema == "data": # data:image/jpeg;base64,/9j/4TbYRXhpZgAATU0AKgAAAAgADQEA
+                    data = url[5:].split(';')
+
+                    contentType = data[0]
+                    data = data[1].split(',')
+
+                    if data[0] == "base64":
+                        content = base64.b64decode(data[1])
+
+                elif schema == "http" or schema == "https":
+                    response = requests.get(url, headers={
+                        "User-Agent": downloader.userAgent,
+                        "Referer": downloader.getDomain()
+                        })
+                    response.raise_for_status()
+                    contentType = response.headers['content-type']
+                    content = response.content
+
+                if not contentType or not content:
+                    break
+
+                fileType = mimetypes.guess_extension(contentType)
                 if not fileType:
                     fileType = f".{fallbackExension}"
 
@@ -151,7 +171,7 @@ class Application:
                         print(f"Saving: {filename}")
 
                     with open(f"comics/{comicName}/{filename}", 'wb') as file:
-                        file.write(response.content)
+                        file.write(content)
 
                 # Update config
                 if update_config:
