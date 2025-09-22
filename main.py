@@ -60,7 +60,7 @@ class Application:
             enabled = comics[i]['enabled']
 
             if not enabled:
-                print(f"Skipped: {comicName}")
+                print(f"\nSkipped: {comicName}")
                 continue
 
             imageSelector = comics[i].get('image_selector')
