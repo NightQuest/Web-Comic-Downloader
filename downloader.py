@@ -34,27 +34,37 @@ class WebComicDownloader:
             return None
         return title.text.strip()
 
-    def getImageURL(self, elementSelector: tuple[str, str]) -> str | None:
+    def getImageURLs(self, elementSelector: tuple[str, str]) -> list[str] | None:
         try:
-            elem = self.driver.find_element(elementSelector[0], elementSelector[1])
+            elems = self.driver.find_elements(elementSelector[0], elementSelector[1])
         except SExceptions.NoSuchElementException:
             return None
 
-        # Wordpress in particular seems to have this
-        origfile = elem.get_attribute('data-orig-file')
-        if origfile:
-            return origfile
+        ret = []
 
-        # Get largest image URL from srcset
-        srcset = elem.get_attribute('srcset')
-        width = elem.get_attribute('width')
-        if srcset and width:
-            srcset_largest = srcset.split(',')[-1].strip().split(' ')
-            if int(width) < int(srcset_largest[1].removesuffix('w')):
-                return srcset_largest[0]
+        for elem in elems:
+            # Wordpress in particular seems to have this
+            origfile = elem.get_attribute('data-orig-file')
+            if origfile:
+                ret.append(origfile)
+                continue
 
-        # Fallback to src
-        return elem.get_attribute("src")
+            # Get largest image URL from srcset
+            srcset = elem.get_attribute('srcset')
+            width = elem.get_attribute('width')
+            if srcset and width:
+                srcset_largest = srcset.split(',')[-1].strip().split(' ')
+                if int(width) < int(srcset_largest[1].removesuffix('w')):
+                    ret.append(srcset_largest[0])
+                    continue
+
+            # Fallback to src
+            ret.append(elem.get_attribute("src"))
+
+        if len(ret) >= 1:
+            return ret
+
+        return None
 
     def getLink(self, elementSelector: tuple[str, str]) -> str | None:
         try:

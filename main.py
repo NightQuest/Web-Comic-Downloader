@@ -85,7 +85,7 @@ class Application:
             pageCount = 0;
             while nextPage:
                 complete = False
-                url = None
+                urls = None
                 title = None
                 pageCount = pageCount + 1
 
@@ -103,7 +103,7 @@ class Application:
                             downloader.wait(delay)
 
                         currentPage = nextPage
-                        url = downloader.getImageURL(imageSelector)
+                        urls = downloader.getImageURLs(imageSelector)
 
                         title = None
                         if titleSelector:
@@ -120,58 +120,68 @@ class Application:
                     except:
                         downloader = WebComicDownloader()
 
-                if not url:
+                if not urls:
                     break
 
-                schema = url.split(':')[0]
-                contentType = None
-                content = None
 
-                if schema == "data": # data:image/jpeg;base64,/9j/4TbYRXhpZgAATU0AKgAAAAgADQEA
-                    data = url[5:].split(';')
+                # Loop through and save each image returned
+                urlCount: int = len(urls)
+                for i in range(urlCount):
+                    url = urls[i]
 
-                    contentType = data[0]
-                    data = data[1].split(',')
+                    schema = url.split(':')[0]
+                    contentType = None
+                    content = None
 
-                    if data[0] == "base64":
-                        content = base64.b64decode(data[1])
+                    if schema == "data": # data:image/jpeg;base64,/9j/4TbYRXhpZgAATU0AKgAAAAgADQEA
+                        data = url[5:].split(';')
 
-                elif schema == "http" or schema == "https":
-                    response = requests.get(url, headers={
-                        "User-Agent": downloader.userAgent,
-                        "Referer": downloader.getDomain()
-                        })
-                    response.raise_for_status()
-                    contentType = response.headers['content-type']
-                    content = response.content
+                        contentType = data[0]
+                        data = data[1].split(',')
 
-                if not contentType or not content:
-                    break
+                        if data[0] == "base64":
+                            content = base64.b64decode(data[1])
 
-                fileType = mimetypes.guess_extension(contentType)
-                if not fileType:
-                    fileType = f".{fallbackExension}"
+                    elif schema == "http" or schema == "https":
+                        response = requests.get(url, headers={
+                            "User-Agent": downloader.userAgent,
+                            "Referer": downloader.getDomain()
+                            })
+                        response.raise_for_status()
+                        contentType = response.headers['content-type']
+                        content = response.content
 
-                if not os.path.exists(f"comics/{comicName}"):
-                    os.mkdir(f"comics/{comicName}")
+                    if not contentType or not content:
+                        break
 
-                if not title:
-                    filename = f"{pageNum:05d}{fileType}"
-                else:
-                    filename = f"{pageNum:05d} - {title}{fileType}"
+                    fileType = mimetypes.guess_extension(contentType)
+                    if not fileType:
+                        fileType = f".{fallbackExension}"
 
-                exists = os.path.exists(f"comics/{comicName}/{filename}")
+                    if not os.path.exists(f"comics/{comicName}"):
+                        os.mkdir(f"comics/{comicName}")
 
-                if not overwrite_existing and exists:
-                    print(f"Skipped: {filename}")
-                else:
-                    if exists:
-                        print(f"Overwriting: {filename}")
+                    pageNumStr = f"{pageNum:05d}"
+                    if urlCount > 1:
+                        pageNumStr += f".{i + 1}"
+
+                    if not title:
+                        filename = f"{pageNumStr}{fileType}"
                     else:
-                        print(f"Saving: {filename}")
+                        filename = f"{pageNumStr} - {title}{fileType}"
 
-                    with open(f"comics/{comicName}/{filename}", 'wb') as file:
-                        file.write(content)
+                    exists = os.path.exists(f"comics/{comicName}/{filename}")
+
+                    if not overwrite_existing and exists:
+                        print(f"Skipped: {filename}")
+                    else:
+                        if exists:
+                            print(f"Overwriting: {filename}")
+                        else:
+                            print(f"Saving: {filename}")
+
+                        with open(f"comics/{comicName}/{filename}", 'wb') as file:
+                            file.write(content)
 
                 # Update config
                 if update_config:
