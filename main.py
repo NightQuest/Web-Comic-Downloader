@@ -132,6 +132,7 @@ class Application:
                     schema = url.split(':')[0]
                     contentType = None
                     content = None
+                    needsGet = False
 
                     if schema == "data": # data:image/jpeg;base64,/9j/4TbYRXhpZgAATU0AKgAAAAgADQEA
                         data = url[5:].split(';')
@@ -143,15 +144,15 @@ class Application:
                             content = base64.b64decode(data[1])
 
                     elif schema == "http" or schema == "https":
-                        response = requests.get(url, headers={
+                        response = requests.head(url, headers={
                             "User-Agent": downloader.userAgent,
                             "Referer": downloader.getDomain()
                             })
                         response.raise_for_status()
                         contentType = response.headers['content-type']
-                        content = response.content
+                        needsGet = True
 
-                    if not contentType or not content:
+                    if not contentType:
                         break
 
                     fileType = mimetypes.guess_extension(contentType)
@@ -175,6 +176,17 @@ class Application:
                     if not overwrite_existing and exists:
                         print(f"Skipped: {filename}")
                     else:
+                        if needsGet:
+                            response = requests.get(url, headers={
+                                "User-Agent": downloader.userAgent,
+                                "Referer": downloader.getDomain()
+                                })
+                            response.raise_for_status()
+                            content = response.content
+
+                        if not content:
+                            break
+                        
                         if exists:
                             print(f"Overwriting: {filename}")
                         else:
