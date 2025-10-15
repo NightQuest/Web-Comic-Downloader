@@ -123,11 +123,10 @@ class Application:
                 if not urls:
                     break
 
-
                 # Loop through and save each image returned
                 urlCount: int = len(urls)
-                for i in range(urlCount):
-                    url = urls[i]
+                for x in range(urlCount):
+                    url = urls[x]
 
                     schema = url.split(':')[0]
                     contentType = None
@@ -164,7 +163,7 @@ class Application:
 
                     pageNumStr = f"{pageNum:05d}"
                     if urlCount > 1:
-                        pageNumStr += f".{i + 1}"
+                        pageNumStr += f".{x + 1}"
 
                     if not title:
                         filename = f"{pageNumStr}{fileType}"
