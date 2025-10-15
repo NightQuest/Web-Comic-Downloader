@@ -49,6 +49,12 @@ class WebComicDownloader:
                 ret.append(origfile)
                 continue
 
+            # Some Wordpress seems to have this instead of data-orig-file
+            imgfile = elem.get_attribute('data-image')
+            if imgfile:
+                ret.append(imgfile)
+                continue
+
             # Get largest image URL from srcset
             srcset = elem.get_attribute('srcset')
             width = elem.get_attribute('width')
