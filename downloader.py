@@ -66,6 +66,15 @@ class WebComicDownloader:
     def load(self, page: str) -> None:
         if not self.driver:
             raise RuntimeError("WebComicDownloader is closed or not initialized.")
+
+        # Navigate to about:blank first to encourage release of prior page resources
+        try:
+            self.driver.get("about:blank")
+        except Exception:
+            # Ignore failures to navigate to about:blank and proceed
+            pass
+
+        # Now navigate to the requested page
         self.driver.get(page)
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
