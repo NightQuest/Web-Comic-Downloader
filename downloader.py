@@ -63,7 +63,7 @@ class WebComicDownloader:
         except Exception:
             pass
 
-    def load(self, page: str):
+    def load(self, page: str) -> None:
         self.driver.get(page)
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
