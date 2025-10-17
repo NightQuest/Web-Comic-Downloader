@@ -88,7 +88,7 @@ class WebComicDownloader:
             raise RuntimeError("WebComicDownloader is closed or not initialized.")
         return self.driver.execute_script('return window.location.origin;')
 
-    def getTitle(self, elementSelector: tuple[str, str]) -> str | None:
+    def getTitle(self, elementSelector: tuple[str, str]) -> Optional[str]:
         if not self.driver:
             return None
         try:
@@ -100,7 +100,7 @@ class WebComicDownloader:
             return None
         return title.text.strip()
 
-    def getImageURLs(self, elementSelector: tuple[str, str]) -> list[str] | None:
+    def getImageURLs(self, elementSelector: tuple[str, str]) -> Optional[list[str]]:
         if not self.driver:
             return None
         try:
@@ -140,7 +140,7 @@ class WebComicDownloader:
 
         return None
 
-    def getLink(self, elementSelector: tuple[str, str]) -> str | None:
+    def getLink(self, elementSelector: tuple[str, str]) -> Optional[str]:
         if not self.driver:
             return None
         try:
