@@ -1,5 +1,7 @@
-import os, json, base64, uuid
 from typing import Any
+import os
+import json
+import copy
 
 class Config:
     DEFAULT_CONFIG = {
@@ -24,6 +26,13 @@ class Config:
         self._fileName = fileName
         self._store = self._readConfig()
         self._ensureDefaultsExist()
+        # Validate certain config values
+        allowed_download_by = {"order", "name_desc", "name_asc"}
+        current_download_by = self._store.get("download_by")
+        if current_download_by not in allowed_download_by:
+            print(f"Warning: Invalid download_by '{current_download_by}'. Falling back to 'order'.")
+            self._store["download_by"] = "order"
+            self._writeConfig()
 
     def _ensureDefaultsExist(self, config: dict | None = None, default: dict | None = None) -> bool:
         # If config and default are None, start with the initial configuration
@@ -34,51 +43,54 @@ class Config:
 
         writeConfig = False
 
-		# Iterate over the keys in the default configuration
-		for key, value in default.items():
-		# If the key is not in the configuration, add it with its default value
-			if key not in config:
-				config[key] = value
-				writeConfig = True
-			# If the value is a dictionary, recursively call _ensureDefaultsExist for nested keys
-			elif isinstance(value, dict) and isinstance(config[key], dict):
-				wasChanged = self._ensureDefaultsExist(config[key], value)
-				if wasChanged:
-					writeConfig = True
+        for key, value in default.items():
+            if key not in config:
+                # Insert a deep copy to avoid mutating DEFAULT_CONFIG
+                config[key] = copy.deepcopy(value)
+                writeConfig = True
+            elif isinstance(value, dict) and isinstance(config[key], dict):
+                if self._ensureDefaultsExist(config[key], value):
+                    writeConfig = True
+            elif isinstance(value, list) and isinstance(config[key], list):
+                # If default is a list of dicts, patch defaults into each dict item
+                if value and isinstance(value[0], dict):
+                    item_default = value[0]
+                    for item in config[key]:
+                        if isinstance(item, dict):
+                            if self._ensureDefaultsExist(item, item_default):
+                                writeConfig = True
 
         if writeConfig and config is self._store:
             self._writeConfig()
 
         return writeConfig
 
-	def _writeConfig(self):
-		try:
-			# Open the file in write mode, creating it if it doesn't exist
-			with open(self._fileName, mode="w") as file:
-				# Serialize the configuration dictionary to JSON and write it to the file
-				json.dump(self._store, file, indent=4)
-		except FileNotFoundError as e:
-			# Raise an error if the specified file path does not exist or is inaccessible
-			raise FileNotFoundError(f"Could not write configuration: {e}")
-		except IOError as e:
-			# Raise an error if an I/O error occurs while writing to the file
-			raise IOError(f"An I/O error occurred while writing configuration: {e}")
+    def _writeConfig(self) -> None:
+        try:
+            directory = os.path.dirname(self._fileName)
+            if directory:
+                os.makedirs(directory, exist_ok=True)
+            with open(self._fileName, mode="w") as file:
+                json.dump(self._store, file, indent=4)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f"Could not write configuration: {e}")
+        except IOError as e:
+            raise IOError(f"An I/O error occurred while writing configuration: {e}")
 
-	def _readConfig(self):
-		try:
-			# Open the file in read mode
-			with open(self._fileName, mode="r") as file:
-				# Deserialize the JSON data from the file into a dictionary
-				return json.load(file)
-		except FileNotFoundError as e:
-			# Raise an error if the specified file path does not exist or is inaccessible
-			raise FileNotFoundError(f"Could not read configuration: {e}")
-		except IOError as e:
-			# Raise an error if an I/O error occurs while reading from the file
-			raise IOError(f"An I/O error occurred while reading configuration: {e}")
-		except json.JSONDecodeError as e:
-			# Raise an error if the file is not in valid JSON format
-			raise json.JSONDecodeError(f"Invalid JSON format: {e.msg}", e.doc, e.pos)
+    def _readConfig(self) -> dict:
+        try:
+            with open(self._fileName, mode="r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            # First run: create from defaults and persist
+            store = copy.deepcopy(self.DEFAULT_CONFIG)
+            self._store = store
+            self._writeConfig()
+            return store
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in {self._fileName}: {e}") from e
+        except IOError as e:
+            raise IOError(f"An I/O error occurred while reading configuration: {e}")
 
     def get(self, key: str) -> Any:
         return self._store.get(key)
