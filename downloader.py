@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.common import exceptions as SExceptions
+import atexit
 from typing import Optional
 
 class WebComicDownloader:
@@ -8,6 +9,7 @@ class WebComicDownloader:
         ) -> None:
         self.driver: Optional[webdriver.Remote] = None
         self.userAgent: Optional[str] = None
+        self._closed: bool = False
 
         try:
             if browser.lower() == "firefox":
@@ -20,6 +22,9 @@ class WebComicDownloader:
                 options.set_preference("network.http.use-cache", False)
                 self.driver = webdriver.Firefox(options=options)
 
+            # Register an atexit hook to ensure cleanup even if __del__ is skipped
+            atexit.register(self.close)
+
             # Only attempt to query userAgent if driver exists
             if self.driver:
                 self.userAgent = self.driver.execute_script('return navigator.userAgent;')
@@ -27,8 +32,36 @@ class WebComicDownloader:
             # If initialization fails midway, ensure we don't leak a partially created driver
             self.close()
             raise
+
+    def __enter__(self) -> 'WebComicDownloader':
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> bool:
+        self.close()
+        # Do not suppress exceptions
+        return False
+
+    def close(self) -> None:
+        """Idempotent cleanup of the webdriver resources."""
+        if self._closed:
+            return
+        self._closed = True
+        if self.driver is not None:
+            try:
+                # Attempt to close the current window if still open
+                self.driver.close()
+                self.driver.quit()
+            except Exception:
+                pass
+            finally:
+                self.driver = None
+
     def __del__(self) -> None:
-        self.driver.quit()
+        # Be defensive in finalizer; never raise
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def load(self, page: str):
         self.driver.get(page)
