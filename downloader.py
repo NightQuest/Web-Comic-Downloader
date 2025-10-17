@@ -1,16 +1,32 @@
 from selenium import webdriver
 from selenium.common import exceptions as SExceptions
+from typing import Optional
 
 class WebComicDownloader:
     def __init__(self,
         browser: str = "firefox",
         ) -> None:
-        if browser == "firefox":
-            options = webdriver.FirefoxOptions()
-            options.add_argument("-headless")
-            self.driver = webdriver.Firefox(options)
-        self.userAgent = self.driver.execute_script('return navigator.userAgent;')
+        self.driver: Optional[webdriver.Remote] = None
+        self.userAgent: Optional[str] = None
 
+        try:
+            if browser.lower() == "firefox":
+                options = webdriver.FirefoxOptions()
+                options.add_argument("-headless")
+                # Disable caches in Firefox profile (migrated to options preferences)
+                options.set_preference("browser.cache.disk.enable", False)
+                options.set_preference("browser.cache.memory.enable", False)
+                options.set_preference("browser.cache.offline.enable", False)
+                options.set_preference("network.http.use-cache", False)
+                self.driver = webdriver.Firefox(options=options)
+
+            # Only attempt to query userAgent if driver exists
+            if self.driver:
+                self.userAgent = self.driver.execute_script('return navigator.userAgent;')
+        except Exception:
+            # If initialization fails midway, ensure we don't leak a partially created driver
+            self.close()
+            raise
     def __del__(self) -> None:
         self.driver.quit()
 
