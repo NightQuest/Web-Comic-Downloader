@@ -2,38 +2,37 @@ import os, json, base64, uuid
 from typing import Any
 
 class Config:
-	DEFAULT_CONFIG = {
+    DEFAULT_CONFIG = {
         "browser": "firefox",
         "delay": 0.25,
-		"fallback_extension": "png",
-		"download_by": "order", # order, name_desc, name_asc
-    	"overwrite_existing": False,
-    	"update_config": False, # this will re-order if download_by is anything other than 'order'
-		"comics": [{
-			"enabled": True,
-			"name": "Comic Name",
-			"url": "COMIC_PAGE_1_URL",
-			"page_num": 1,
-			"image_selector": ["id", "cc-comic"],
-			"title_selector": ["class_name", "cc-newsheader"],
-			"next_selector": ["class_name", "cc-next"]
-		}]
-	}
+        "fallback_extension": "png",
+        "download_by": "order", # order, name_desc, name_asc
+        "overwrite_existing": False,
+        "update_config": False, # this will re-order if download_by is anything other than 'order'
+        "comics": [{
+            "enabled": True,
+            "name": "Comic Name",
+            "url": "COMIC_PAGE_1_URL",
+            "page_num": 1,
+            "image_selector": ["id", "cc-comic"],
+            "title_selector": ["class_name", "cc-newsheader"],
+            "next_selector": ["class_name", "cc-next"]
+        }]
+    }
 
-	def __init__(self, fileName):
-		self._fileName = fileName
-		self._store = self._readConfig()
-		self._ensureDefaultsExist()
+    def __init__(self, fileName: str) -> None:
+        self._fileName = fileName
+        self._store = self._readConfig()
+        self._ensureDefaultsExist()
 
-	def _ensureDefaultsExist(self, config=None, default=None):
-		# If config and default are None, start with the initial configuration
-		if config is None:
-			config = self._store
-		if default is None:
-			default = self.DEFAULT_CONFIG
+    def _ensureDefaultsExist(self, config: dict | None = None, default: dict | None = None) -> bool:
+        # If config and default are None, start with the initial configuration
+        if config is None:
+            config = self._store
+        if default is None:
+            default = self.DEFAULT_CONFIG
 
-		# Flag to track if changes were made
-		writeConfig = False
+        writeConfig = False
 
 		# Iterate over the keys in the default configuration
 		for key, value in default.items():
@@ -47,11 +46,10 @@ class Config:
 				if wasChanged:
 					writeConfig = True
 
-		# Write the updated configuration to file if changes were made
-		if writeConfig and config is self._store:
-			self._writeConfig()
+        if writeConfig and config is self._store:
+            self._writeConfig()
 
-		return writeConfig
+        return writeConfig
 
 	def _writeConfig(self):
 		try:
