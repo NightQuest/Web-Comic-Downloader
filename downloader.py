@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.common import exceptions as SExceptions
+from selenium.webdriver.common.by import By
 import atexit
 from typing import Optional
 
@@ -91,14 +92,36 @@ class WebComicDownloader:
     def getTitle(self, elementSelector: tuple[str, str]) -> Optional[str]:
         if not self.driver:
             return None
+        by, selector = elementSelector
+
+        # Support XPath expressions that request an attribute directly via '/@attr'
+        # Example: (By.XPATH, "//img[@id='cc-comic']/@alt")
+        attr_to_read: Optional[str] = None
+        if by == By.XPATH and '/@' in selector:
+            try:
+                xpath_part, attr_part = selector.rsplit('/@', 1)
+                attr_to_read = attr_part.strip()
+                # Find the element using the XPath without the attribute part
+                element = self.driver.find_element(By.XPATH, xpath_part)
+                value = element.get_attribute(attr_to_read)
+                if value is None:
+                    return None
+                value = value.strip()
+                return value if value else None
+            except (SExceptions.NoSuchElementException, SExceptions.StaleElementReferenceException):
+                return None
+            except Exception:
+                # Fall back to standard behavior below if parsing fails
+                pass
+
+        # Standard element text retrieval path
         try:
-            title = self.driver.find_element(elementSelector[0], elementSelector[1])
+            element = self.driver.find_element(by, selector)
         except (SExceptions.NoSuchElementException, SExceptions.StaleElementReferenceException):
             return None
 
-        if len(title.text.strip()) == 0:
-            return None
-        return title.text.strip()
+        text = element.text.strip() if element.text else ''
+        return text if text else None
 
     def getImageURLs(self, elementSelector: tuple[str, str]) -> Optional[list[str]]:
         if not self.driver:
