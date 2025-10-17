@@ -64,16 +64,24 @@ class WebComicDownloader:
             pass
 
     def load(self, page: str) -> None:
+        if not self.driver:
+            raise RuntimeError("WebComicDownloader is closed or not initialized.")
         self.driver.get(page)
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     def wait(self, time: float) -> None:
+        if not self.driver:
+            raise RuntimeError("WebComicDownloader is closed or not initialized.")
         self.driver.implicitly_wait(time)
 
     def getDomain(self) -> str:
+        if not self.driver:
+            raise RuntimeError("WebComicDownloader is closed or not initialized.")
         return self.driver.execute_script('return window.location.origin;')
 
     def getTitle(self, elementSelector: tuple[str, str]) -> str | None:
+        if not self.driver:
+            return None
         try:
             title = self.driver.find_element(elementSelector[0], elementSelector[1])
         except (SExceptions.NoSuchElementException, SExceptions.StaleElementReferenceException):
@@ -84,6 +92,8 @@ class WebComicDownloader:
         return title.text.strip()
 
     def getImageURLs(self, elementSelector: tuple[str, str]) -> list[str] | None:
+        if not self.driver:
+            return None
         try:
             elems = self.driver.find_elements(elementSelector[0], elementSelector[1])
         except SExceptions.NoSuchElementException:
@@ -122,6 +132,8 @@ class WebComicDownloader:
         return None
 
     def getLink(self, elementSelector: tuple[str, str]) -> str | None:
+        if not self.driver:
+            return None
         try:
             elem = self.driver.find_element(elementSelector[0], elementSelector[1])
         except SExceptions.NoSuchElementException:
