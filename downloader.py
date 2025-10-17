@@ -64,6 +64,23 @@ class WebComicDownloader:
         except Exception:
             pass
 
+    def _parseSrcset(self, srcset_value: Optional[str]) -> list[tuple[int, str]]:
+        """Parse a srcset string into a list of (width, url) tuples sorted descending by width."""
+        if not srcset_value:
+            return []
+        candidates: list[tuple[int, str]] = []
+        for part in srcset_value.split(','):
+            pieces = part.strip().split()
+            if len(pieces) >= 2 and pieces[1].endswith('w'):
+                url = pieces[0]
+                try:
+                    w_val = int(pieces[1][:-1])  # strip trailing 'w'
+                except ValueError:
+                    continue
+                candidates.append((w_val, url))
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        return candidates
+
     def load(self, page: str) -> None:
         if not self.driver:
             raise RuntimeError("WebComicDownloader is closed or not initialized.")
@@ -127,41 +144,58 @@ class WebComicDownloader:
         if not self.driver:
             return None
         try:
-            elems = self.driver.find_elements(elementSelector[0], elementSelector[1])
+            elements = self.driver.find_elements(elementSelector[0], elementSelector[1])
         except SExceptions.NoSuchElementException:
             return None
 
-        ret = []
+        urls: list[str] = []
 
-        for elem in elems:
-            # Wordpress in particular seems to have this
-            origfile = elem.get_attribute('data-orig-file')
-            if origfile:
-                ret.append(origfile)
-                continue
+        for el in elements:
+            # 1) Prefer WordPress-specific attributes
+            for attr in ('data-orig-file', 'data-image'):
+                val = el.get_attribute(attr)
+                if val:
+                    urls.append(val)
+                    break
+            else:
+                # 2) Prefer src unless width suggests a larger srcset candidate
+                src = el.get_attribute('src')
+                srcset_value = el.get_attribute('srcset') or ''
+                width_attr = el.get_attribute('width')
 
-            # Some Wordpress seems to have this instead of data-orig-file
-            imgfile = elem.get_attribute('data-image')
-            if imgfile:
-                ret.append(imgfile)
-                continue
+                candidates = self._parseSrcset(srcset_value)
 
-            # Get largest image URL from srcset
-            srcset = elem.get_attribute('srcset')
-            width = elem.get_attribute('width')
-            if srcset and width:
-                srcset_largest = srcset.split(',')[-1].strip().split(' ')
-                if int(width) < int(srcset_largest[1].removesuffix('w')):
-                    ret.append(srcset_largest[0])
-                    continue
+                chosen_url: str | None = None
+                if candidates and width_attr is not None:
+                    largest_w, largest_url = candidates[0]
+                    try:
+                        renderedWidth = int(str(width_attr).strip())
+                        if renderedWidth < largest_w:
+                            chosen_url = largest_url
+                    except ValueError:
+                        pass
 
-            # Fallback to src
-            ret.append(elem.get_attribute("src"))
+                if chosen_url:
+                    urls.append(chosen_url)
+                else:
+                    # Prefer src if present; otherwise, fall back to largest srcset candidate if available
+                    if src:
+                        urls.append(src)
+                    elif candidates:
+                        urls.append(candidates[0][1])
 
-        if len(ret) >= 1:
-            return ret
+        if not urls:
+            return None
 
-        return None
+        # De-duplicate while preserving order
+        seen: set[str] = set()
+        deDuped: list[str] = []
+        for u in urls:
+            if u and u not in seen:
+                seen.add(u)
+                deDuped.append(u)
+
+        return deDuped if deDuped else None
 
     def getLink(self, elementSelector: tuple[str, str]) -> Optional[str]:
         if not self.driver:
