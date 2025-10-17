@@ -199,7 +199,7 @@ class Application:
                     comics[i]['url'] = currentPage
                     comics[i]['page_num'] = pageNum
                     self.config.set('comics', comics)
-                    self.config._writeConfig()
+                    self.config.save()
 
                 if nextPage:
                     nextPage = nextPage.strip().split('#')[0] # Get rid of #something-here

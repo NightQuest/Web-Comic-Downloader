@@ -88,6 +88,8 @@ class Config:
     def set(self, key: str, value: Any) -> None:
         self._store[key] = value
 
+    def save(self) -> None:
+        self._writeConfig()
 
     def pop(self, key: str, default: Any | None = None) -> Any:
         return self._store.pop(key, default)
