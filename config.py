@@ -1,5 +1,5 @@
-from typing import overload
 import os, json, base64, uuid
+from typing import Any
 
 class Config:
 	DEFAULT_CONFIG = {
@@ -82,17 +82,12 @@ class Config:
 			# Raise an error if the file is not in valid JSON format
 			raise json.JSONDecodeError(f"Invalid JSON format: {e.msg}", e.doc, e.pos)
 
-	def get(self, key: str):
-		return self._store.get(key)
+    def get(self, key: str) -> Any:
+        return self._store.get(key)
 
-	@overload
-	def set(self, key: str, value: list): ...
+    def set(self, key: str, value: Any) -> None:
+        self._store[key] = value
 
-	@overload
-	def set(self, key: str, value: str): ...
 
-	def set(self, key: str, value):
-		self._store.update({key: value})
-
-	def pop(self, key: str):
-		self._store.pop(key)
+    def pop(self, key: str, default: Any | None = None) -> Any:
+        return self._store.pop(key, default)
