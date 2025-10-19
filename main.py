@@ -93,6 +93,7 @@ class Application:
                 # restart every 100 pages
                 if pageCount == 100:
                     pageCount = 0
+                    downloader.close()
                     downloader = WebComicDownloader()
 
                 while not complete and nextPage:
@@ -118,6 +119,7 @@ class Application:
                     except KeyboardInterrupt as e:
                         raise e
                     except:
+                        downloader.close()
                         downloader = WebComicDownloader()
 
                 if not urls:
@@ -209,6 +211,7 @@ class Application:
                 else:
                     pageNum = pageNum + 1
 
+            downloader.close()
 
 if __name__ == "__main__":
     try:
